@@ -1,0 +1,58 @@
+{
+ "titre": "À TOI, LA GLOIRE, Ô RESSUSCITÉ",
+ "compositeur": "Musique : G. F. Haendel (1745)",
+ "en_tete": [
+  "E. Budry (1885)",
+  "Musique : G. F. Haendel (1745)",
+  "baissé d'un ton"
+ ],
+ "tonique": 2,
+ "mode": "major",
+ "nb_mesures": 16,
+ "nb_couplets": 3,
+ "tessitures": {
+  "soprano": [
+   "C#4",
+   "D5"
+  ],
+  "alto": [
+   "A3",
+   "F#4"
+  ],
+  "tenor": [
+   "E3",
+   "B3"
+  ],
+  "basse": [
+   "G#2",
+   "A3"
+  ]
+ },
+ "accords": [
+  "A",
+  "A7",
+  "Bm",
+  "C#m",
+  "D",
+  "E",
+  "E7",
+  "Em6",
+  "F#",
+  "F#m"
+ ],
+ "nb_accords": 26,
+ "nb_syllabes": 129,
+ "corrections": [
+  "Mesure 4, voix 2 : silence ajouté (1.0 temps manquants)",
+  "Mesure 8, voix 1 : silence ajouté (1.0 temps manquants)",
+  "Mesure 8, voix 2 : silence ajouté (1.0 temps manquants)",
+  "Mesure 9, voix 1 : accord ['E4', 'G4'] ramené à G4",
+  "Mesure 12, voix 2 : silence ajouté (1.0 temps manquants)",
+  "Mesure 16, voix 2 : silence ajouté (1.0 temps manquants)",
+  "Mesure 4, voix 1 : silence ajouté (1.0 temps manquants)",
+  "Mesure 8, voix 1 : silence ajouté (1.0 temps manquants)",
+  "Mesure 8, voix 2 : silence ajouté (1.0 temps manquants)",
+  "Mesure 12, voix 2 : silence ajouté (2.0 temps manquants)",
+  "Mesure 16, voix 1 : silence ajouté (1.0 temps manquants)"
+ ]
+}

@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# fichiers de travail Audiveris
+*.omr
+*.log
+
+# les PDF sources restent en local (droits de la gravure)
+*.pdf

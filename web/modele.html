@@ -1,0 +1,382 @@
+<title>__TITRE__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,500;0,600;1,500&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+:root{
+  --bg:#EEF1EC; --panel:#FFFFFF; --ink:#1C2420; --muted:#5B6660; --line:#D3DAD4;
+  --accent:#2F5D50; --accent-ink:#FFFFFF; --accent-soft:#DCE8E2;
+  --play:#C2410C; --warn:#9A5B00; --warn-soft:#FBEBD0;
+  --paper:#FFFFFF; --paper-shadow:0 1px 2px rgba(20,30,25,.08),0 6px 24px rgba(20,30,25,.07);
+  --s:#B8325A; --a:#C2410C; --t:#2F6E9A; --b:#4A5A2A;
+  --display:"EB Garamond","Garamond","Times New Roman",serif;
+  --ui:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#131815; --panel:#1C2320; --ink:#E4EAE5; --muted:#9BA7A0; --line:#2E3833;
+    --accent:#8CC2AE; --accent-ink:#10201A; --accent-soft:#233730;
+    --warn:#F0B35A; --warn-soft:#3A2C14;
+    --paper:#F4F4EF; --paper-shadow:0 1px 2px rgba(0,0,0,.4);
+    --s:#F07A9B; --a:#F59A5C; --t:#7FB6DE; --b:#B6C98A;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#131815; --panel:#1C2320; --ink:#E4EAE5; --muted:#9BA7A0; --line:#2E3833;
+  --accent:#8CC2AE; --accent-ink:#10201A; --accent-soft:#233730;
+  --warn:#F0B35A; --warn-soft:#3A2C14;
+  --paper:#F4F4EF; --paper-shadow:0 1px 2px rgba(0,0,0,.4);
+  --s:#F07A9B; --a:#F59A5C; --t:#7FB6DE; --b:#B6C98A;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--ui);padding-inline:16px;padding-block:0 48px}
+.wrap{max-width:1100px;margin:0 auto}
+header.top{padding-block:24px 14px;display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:8px 24px}
+header.top h1{font:600 clamp(26px,4.2vw,38px)/1.1 var(--display);margin:0;text-wrap:balance;letter-spacing:.005em}
+header.top .meta{color:var(--muted);font-size:14px}
+header.top .meta b{color:var(--ink);font-weight:700}
+.eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:4px}
+
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:8px 10px;border-bottom:1px solid var(--line);display:grid;gap:8px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.seg{display:flex;flex-wrap:wrap;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{border:0;background:transparent;color:var(--ink);font:inherit;font-size:14px;padding:7px 12px;border-radius:7px;cursor:pointer;min-height:36px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.seg button:hover:not([aria-pressed="true"]){background:var(--accent-soft)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ctl{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
+.ctl output{color:var(--ink);font-weight:700;min-width:7.5em;font-variant-numeric:tabular-nums}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-size:14px;border-radius:8px;min-width:36px;min-height:36px;padding:0 10px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700;padding:0 16px}
+input[type=range]{accent-color:var(--accent);width:110px}
+
+.mix{display:flex;flex-wrap:wrap;gap:6px}
+.voice{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 10px 4px 6px;font-size:13px;cursor:pointer;min-height:34px;color:var(--ink);font-family:inherit}
+.voice i{width:12px;height:12px;border-radius:50%;background:var(--c);display:inline-block}
+.voice[data-state="muet"]{opacity:.45;text-decoration:line-through}
+.voice[data-state="fort"]{border-color:var(--c);box-shadow:inset 0 0 0 1px var(--c);font-weight:700}
+.voice small{color:var(--muted);font-variant-numeric:tabular-nums}
+.voice .out{color:var(--warn);font-weight:700}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;margin-top:16px}
+.chords{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.chords h2,.notes h2{font:600 20px/1.2 var(--display);margin:0 0 8px}
+.grids{display:flex;flex-wrap:wrap;gap:10px}
+.grid{display:grid;justify-items:center;gap:2px;font-size:14px;font-weight:700}
+.grid svg{width:74px;height:auto;color:var(--ink)}
+
+#score{display:grid;gap:18px}
+.page{background:var(--paper);border-radius:4px;box-shadow:var(--paper-shadow);padding:10px 6px;overflow-x:auto;color:#111}
+.page svg{display:block;max-width:100%;height:auto;margin:0 auto}
+.page g.note.playing, .page g.note.playing *{fill:var(--play)!important;stroke:var(--play)!important}
+.status{padding:40px 0;text-align:center;color:var(--muted)}
+.status.err{color:var(--warn)}
+
+.notes{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;gap:10px}
+.notes p{margin:0;max-width:70ch}
+.notes ul{margin:0;padding-left:18px;display:grid;gap:3px;max-width:75ch}
+.pipeline{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px}
+.pipeline span{background:var(--accent-soft);border-radius:6px;padding:3px 8px}
+.pipeline em{color:var(--muted);font-style:normal}
+.warnbox{background:var(--warn-soft);color:var(--ink);border-radius:8px;padding:8px 10px;font-size:14px}
+@media (max-width:600px){ .ctl output{min-width:0} input[type=range]{width:90px} }
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto!important} }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Partoches · prototype</div>
+      <h1 id="titre"></h1>
+    </div>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <div class="bar" role="toolbar" aria-label="Réglages de la partition">
+    <div class="row">
+      <div class="seg" id="versions" aria-label="Version"></div>
+    </div>
+    <div class="row">
+      <div class="ctl">Tonalité
+        <button class="btn" id="tDown" aria-label="Baisser d'un demi-ton">−</button>
+        <output id="tLabel">Ré majeur</output>
+        <button class="btn" id="tUp" aria-label="Monter d'un demi-ton">+</button>
+      </div>
+      <div class="seg" id="nota" aria-label="Noms d'accords">
+        <button data-n="fr" aria-pressed="true">Do Ré Mi</button><button data-n="en" aria-pressed="false">C D E</button>
+      </div>
+      <label class="ctl" for="zoom">Taille <input type="range" id="zoom" min="26" max="70" value="42"></label>
+    </div>
+    <div class="row">
+      <button class="btn primary" id="play">▶ Écouter</button>
+      <label class="ctl" for="tempo">Tempo <input type="range" id="tempo" min="50" max="160" value="96"><output id="tempoOut">♩ = 96</output></label>
+      <div class="mix" id="mix" aria-label="Voix à l'écoute"></div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <section class="chords" id="chords" hidden>
+      <h2>Accords de guitare</h2>
+      <div class="grids" id="grids"></div>
+    </section>
+    <div id="score"><div class="status" id="status">Chargement du moteur de partition…</div></div>
+
+    <section class="notes">
+      <h2>Comment cette page a été produite</h2>
+      <div class="pipeline"><span>PDF LilyPond</span><em>→</em><span>Audiveris (notes, rythmes)</span><em>→</em><span>texte du PDF (paroles, accords)</span><em>→</em><span>music21 (voix, piano, guitare)</span><em>→</em><span>Verovio (affichage, transposition, écoute)</span></div>
+      <p id="stats"></p>
+      <div class="warnbox" id="residuel"></div>
+      <details><summary>Corrections automatiques appliquées</summary><ul id="corr"></ul></details>
+    </section>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/verovio@6.3.0/dist/verovio-toolkit-wasm.js"></script>
+<script id="data" type="application/json">__DATA__</script>
+<script>
+const DATA = JSON.parse(document.getElementById('data').textContent);
+const VERSIONS = [
+  ['satb','Chœur SATB'],['soprano','Soprano'],['alto','Alto'],['tenor','Ténor'],['basse','Basse'],['piano','Piano'],['guitare','Guitare']
+];
+const VOICES = [['soprano','Soprano','--s'],['alto','Alto','--a'],['tenor','Ténor','--t'],['basse','Basse','--b']];
+// tessitures usuelles (MIDI) pour signaler une voix trop aiguë ou trop grave
+const RANGES = {soprano:[60,79], alto:[55,74], tenor:[48,67], basse:[40,62]};
+const FR = {C:'Do',D:'Ré',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
+const PC_FR = ['Do','Do♯','Ré','Mi♭','Mi','Fa','Fa♯','Sol','La♭','La','Si♭','Si'];
+const PC_EN = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+const ORIG_TONIC = DATA.info.tonique;
+
+const store = {
+  get(k,d){ try{ const v = localStorage.getItem('partoches.'+k); return v===null?d:JSON.parse(v);}catch(e){return d;} },
+  set(k,v){ try{ localStorage.setItem('partoches.'+k, JSON.stringify(v)); }catch(e){} }
+};
+const state = {
+  version: store.get('version','satb'), semis: store.get('semis',0), nota: store.get('nota','fr'),
+  zoom: store.get('zoom',42), tempo: store.get('tempo',96),
+  mix: {soprano:'normal',alto:'normal',tenor:'normal',basse:'normal'}
+};
+let tk, tkAudio, displayMap = [];
+
+// ---------- en-tête
+document.getElementById('titre').textContent = DATA.titre;
+document.getElementById('meta').innerHTML = DATA.info.en_tete.map(t=>t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))).join('<br>')
+  + `<br>4 voix · ${DATA.info.nb_couplets} couplet${DATA.info.nb_couplets>1?'s':''}`;
+
+// ---------- contrôles
+const vWrap = document.getElementById('versions');
+VERSIONS.forEach(([k,l])=>{
+  const b=document.createElement('button'); b.textContent=l; b.dataset.v=k; b.id='v-'+k;
+  b.onclick=()=>{ state.version=k; store.set('version',k); if(VOICES.some(v=>v[0]===k)) setMyVoice(k); else resetMix(); render(); };
+  vWrap.appendChild(b);
+});
+document.querySelectorAll('#nota button').forEach(b=>b.onclick=()=>{ state.nota=b.dataset.n; store.set('nota',state.nota); syncUI(); relabelChords(); drawGrids(); });
+document.getElementById('tDown').onclick=()=>transpose(-1);
+document.getElementById('tUp').onclick=()=>transpose(1);
+const zoom=document.getElementById('zoom'); zoom.value=state.zoom;
+zoom.oninput=()=>{ state.zoom=+zoom.value; store.set('zoom',state.zoom); clearTimeout(zoom.t); zoom.t=setTimeout(render,120); };
+const tempo=document.getElementById('tempo'); tempo.value=state.tempo;
+tempo.oninput=()=>{ state.tempo=+tempo.value; store.set('tempo',state.tempo); syncUI(); if(player.on){ stop(); play(); } };
+function transpose(d){ state.semis=Math.max(-6,Math.min(6,state.semis+d)); store.set('semis',state.semis); stop(); render(); }
+
+const mix=document.getElementById('mix');
+VOICES.forEach(([k,l,c])=>{
+  const b=document.createElement('button'); b.className='voice'; b.id='mix-'+k; b.style.setProperty('--c',`var(${c})`);
+  b.title='Cliquer : normal → ma voix (plus forte) → muette';
+  b.onclick=()=>{ const order=['normal','fort','muet']; state.mix[k]=order[(order.indexOf(state.mix[k])+1)%3]; applyMix(); syncUI(); };
+  mix.appendChild(b);
+});
+function setMyVoice(k){ for(const v in state.mix) state.mix[v] = v===k?'fort':'normal'; applyMix(); }
+function resetMix(){ for(const v in state.mix) state.mix[v]='normal'; applyMix(); }
+
+function midiName(m, fr=true){ const n=(fr?PC_FR:PC_EN)[((m%12)+12)%12]; return n+(Math.floor(m/12)-1); }
+function toMidi(s){ const m=s.match(/^([A-G])([#-]*)(-?\d)$/); const pc={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]] + (m[2]==='#'?1:m[2]==='-'?-1:0); return pc+12*(+m[3]+1); }
+
+function syncUI(){
+  document.querySelectorAll('#versions button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===state.version));
+  document.querySelectorAll('#nota button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.n===state.nota));
+  const tonic=((ORIG_TONIC+state.semis)%12+12)%12;
+  const sign = state.semis===0?'':` (${state.semis>0?'+':''}${state.semis})`;
+  document.getElementById('tLabel').textContent = (state.nota==='fr'?PC_FR:PC_EN)[tonic]+(state.nota==='fr'?' majeur':' major')+sign;
+  document.getElementById('tempoOut').textContent = '♩ = '+state.tempo;
+  VOICES.forEach(([k,l])=>{
+    const [lo,hi]=DATA.info.tessitures[k].map(toMidi).map(x=>x+state.semis);
+    const out = lo<RANGES[k][0]||hi>RANGES[k][1];
+    const b=document.getElementById('mix-'+k); b.dataset.state=state.mix[k];
+    const tag = state.mix[k]==='fort'?' · ma voix':state.mix[k]==='muet'?' · muette':'';
+    b.innerHTML=`<i></i>${l}${tag} <small class="${out?'out':''}" title="${out?'Sort de la tessiture usuelle':''}">${midiName(lo,state.nota==='fr')}–${midiName(hi,state.nota==='fr')}${out?' ⚠':''}</small>`;
+  });
+  document.getElementById('play').textContent = player.on ? '■ Arrêter' : '▶ Écouter';
+}
+
+// ---------- rendu Verovio
+function render(){
+  syncUI();
+  if(!tk) return;
+  const box=document.getElementById('score');
+  const w=Math.max(320, box.clientWidth-12);
+  tk.setOptions({
+    pageWidth: Math.round(w*100/state.zoom), scale: state.zoom, adjustPageHeight:true,
+    pageMarginLeft:30, pageMarginRight:30, pageMarginTop:40, pageMarginBottom:30,
+    transpose: state.semis ? (state.semis>0?'+':'')+state.semis : '',
+    footer:'none', header: 'auto', lyricSize:4.2, spacingSystem:14,
+    svgHtml5:false, svgBoundingBoxes:false
+  });
+  try{
+    tk.loadData(DATA.xml[state.version]);
+  }catch(e){ box.innerHTML='<div class="status err">Impossible d\'afficher cette version.</div>'; return; }
+  const n=tk.getPageCount(); let html='';
+  for(let i=1;i<=n;i++) html+=`<div class="page">${tk.renderToSVG(i)}</div>`;
+  box.innerHTML=html;
+  displayMap = tk.renderToTimemap();
+  relabelChords();
+  document.getElementById('chords').hidden = state.version!=='guitare';
+  drawGrids();
+}
+// noms d'accords en Do Ré Mi : on réécrit la lettre de la fondamentale dans le SVG
+function relabelChords(){
+  document.querySelectorAll('#score g.harm').forEach(g=>{
+    const walker=document.createTreeWalker(g, NodeFilter.SHOW_TEXT); let t;
+    while((t=walker.nextNode())){
+      if(!t.orig) t.orig=t.nodeValue;
+      const m=t.orig.match(/^(\s*)([A-G])(.*)$/s);
+      if(m){ t.nodeValue = state.nota==='fr' ? m[1]+FR[m[2]]+(/^m(?!aj)/.test(m[3])?' '+m[3]:m[3]) : t.orig; break; }
+    }
+  });
+}
+
+// ---------- grilles d'accords (guitare), transposées
+const OPEN = { // cordes Mi grave → Mi aigu ; -1 = non jouée
+  'C':[-1,3,2,0,1,0],'D':[-1,-1,0,2,3,2],'E':[0,2,2,1,0,0],'G':[3,2,0,0,0,3],'A':[-1,0,2,2,2,0],
+  'Am':[-1,0,2,2,1,0],'Dm':[-1,-1,0,2,3,1],'Em':[0,2,2,0,0,0],
+  'A7':[-1,0,2,0,2,0],'D7':[-1,-1,0,2,1,2],'E7':[0,2,0,1,0,0],'G7':[3,2,0,0,0,1],'C7':[-1,3,2,3,1,0],'B7':[-1,2,1,2,0,2],
+  'Em6':[0,2,2,0,2,0]
+};
+const SHAPE_E = {'':[0,2,2,1,0,0],'m':[0,2,2,0,0,0],'7':[0,2,0,1,0,0],'m7':[0,2,0,0,0,0],'m6':[0,2,2,0,2,0]};
+const SHAPE_A = {'':[-1,0,2,2,2,0],'m':[-1,0,2,2,1,0],'7':[-1,0,2,0,2,0],'m7':[-1,0,2,0,1,0],'m6':[-1,0,2,2,1,2]};
+function chordShape(root, q){
+  const key=PC_EN[root].replace('♯','#').replace('♭','b')+q;
+  if(OPEN[key]) return OPEN[key];
+  const fe=((root-4)%12+12)%12, fa=((root-9)%12+12)%12;  // barré sur la corde de Mi ou de La
+  const [f,shape] = fe<=fa ? [fe,SHAPE_E[q]] : [fa,SHAPE_A[q]];
+  return shape.map(x=>x<0?-1:x+f);
+}
+function parseChord(fig){ const m=fig.match(/^([A-G])([#-]?)(.*)$/); let pc={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2]==='#'?1:m[2]==='-'?-1:0); return [((pc%12)+12)%12, m[3]]; }
+function drawGrids(){
+  if(state.version!=='guitare') return;
+  const g=document.getElementById('grids'); g.innerHTML='';
+  DATA.info.accords.forEach(fig=>{
+    let [pc,q]=parseChord(fig); pc=((pc+state.semis)%12+12)%12;
+    const frets=chordShape(pc,q); const played=frets.filter(f=>f>0);
+    const base = Math.max(...played)>4 ? Math.min(...played) : 1;
+    const X=i=>10+i*10, Y=r=>18+r*14;
+    let s=`<svg viewBox="0 0 70 92" role="img" aria-label="grille ${fig}">`;
+    for(let i=0;i<6;i++) s+=`<line x1="${X(i)}" y1="${Y(0)}" x2="${X(i)}" y2="${Y(5)}" stroke="currentColor" stroke-width="1"/>`;
+    for(let r=0;r<=5;r++) s+=`<line x1="${X(0)}" y1="${Y(r)}" x2="${X(5)}" y2="${Y(r)}" stroke="currentColor" stroke-width="${r===0&&base===1?3:1}"/>`;
+    frets.forEach((f,i)=>{
+      if(f<0) s+=`<text x="${X(i)}" y="12" font-size="9" text-anchor="middle" fill="currentColor">×</text>`;
+      else if(f===0) s+=`<circle cx="${X(i)}" cy="9" r="3" fill="none" stroke="currentColor"/>`;
+      else s+=`<circle cx="${X(i)}" cy="${Y(f-base)+7}" r="4.2" fill="currentColor"/>`;
+    });
+    if(base>1) s+=`<text x="64" y="${Y(0)+11}" font-size="9" fill="currentColor">${base}</text>`;
+    s+='</svg>';
+    const name=(state.nota==='fr'?PC_FR:PC_EN)[pc]+(q?(state.nota==='fr'&&q.startsWith('m')?' ':'')+q:'');
+    g.insertAdjacentHTML('beforeend',`<div class="grid">${s}<span>${name}</span></div>`);
+  });
+}
+
+// ---------- écoute : synthé WebAudio, une piste par voix
+const player={on:false};
+let ctx, voiceGains={}, master;
+const LEVEL={normal:1, fort:1.9, muet:0};
+function applyMix(){
+  if(!ctx) return;
+  const any=Object.values(state.mix).includes('fort');
+  for(const [k] of VOICES){
+    const lvl = state.mix[k]==='normal' && any ? .45 : LEVEL[state.mix[k]];
+    voiceGains[k]?.gain.setTargetAtTime(lvl, ctx.currentTime, .03);
+  }
+}
+function voiceEvents(){
+  const ev=[];
+  VOICES.forEach(([k])=>{
+    tkAudio.setOptions({transpose: state.semis ? (state.semis>0?'+':'')+state.semis : ''});
+    tkAudio.loadData(DATA.xml[k]);
+    const seen=new Set();
+    tkAudio.renderToTimemap().forEach(e=>(e.on||[]).forEach(id=>{
+      if(seen.has(id)) return; seen.add(id);
+      const v=tkAudio.getMIDIValuesForElement(id); if(v && v.pitch>0) ev.push({k, ...v});
+    }));
+  });
+  return ev;
+}
+function play(){
+  if(!tkAudio) return;
+  ctx = ctx || new (window.AudioContext||window.webkitAudioContext)();
+  ctx.resume();
+  master=ctx.createGain(); master.gain.value=.22; master.connect(ctx.destination);
+  VOICES.forEach(([k])=>{ voiceGains[k]=ctx.createGain(); voiceGains[k].connect(master); });
+  applyMix();
+  const f=120/state.tempo/1000; // Verovio minute à 120 à la noire
+  const t0=ctx.currentTime+.15;
+  voiceEvents().forEach(n=>{
+    const st=t0+n.time*f, du=Math.max(.08,n.duration*f*.95);
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='triangle'; o.frequency.value=440*Math.pow(2,(n.pitch-69)/12);
+    g.gain.setValueAtTime(0,st); g.gain.linearRampToValueAtTime(1,st+.02); g.gain.setTargetAtTime(.7,st+.05,.2);
+    g.gain.setTargetAtTime(0,st+du,.04);
+    o.connect(g); g.connect(voiceGains[n.k]); o.start(st); o.stop(st+du+.3);
+  });
+  player.on=true; player.t0=t0; player.f=f; player.i=0; player.cur=new Set();
+  const end = displayMap.length? displayMap[displayMap.length-1].tstamp : 0;
+  syncUI();
+  (function tick(){
+    if(!player.on) return;
+    const ms=(ctx.currentTime-player.t0)/player.f;
+    while(player.i<displayMap.length && displayMap[player.i].tstamp<=ms){
+      const e=displayMap[player.i++];
+      (e.off||[]).forEach(id=>{ document.getElementById(id)?.classList.remove('playing'); player.cur.delete(id); });
+      (e.on||[]).forEach(id=>{ const el=document.getElementById(id); if(el){ el.classList.add('playing'); player.cur.add(id);} });
+      const first=[...player.cur].map(id=>document.getElementById(id)).find(Boolean);
+      if(first){ const r=first.getBoundingClientRect(); if(r.top<140||r.bottom>innerHeight-40) first.scrollIntoView({block:'center',behavior:'smooth'}); }
+    }
+    if(ms>end+500) return stop();
+    requestAnimationFrame(tick);
+  })();
+}
+function stop(){
+  if(!player.on) return;
+  player.on=false;
+  try{ master.disconnect(); }catch(e){}
+  document.querySelectorAll('.playing').forEach(el=>el.classList.remove('playing'));
+  syncUI();
+}
+document.getElementById('play').onclick=()=> player.on?stop():play();
+
+// ---------- notes de production
+const I=DATA.info;
+document.getElementById('stats').textContent =
+  `${I.nb_mesures} mesures reconnues à 4 voix, ${I.nb_syllabes} syllabes réparties sur ${I.nb_couplets} couplets, ${I.nb_accords} accords relevés dans le PDF.`;
+const resid=document.getElementById('residuel');
+if(DATA.a_verifier) resid.innerHTML = '<b>Encore à corriger à la main :</b> ' + DATA.a_verifier; else resid.hidden = true;
+I.corrections.forEach(c=>document.getElementById('corr').insertAdjacentHTML('beforeend',`<li>${c}</li>`));
+
+let resizeT; addEventListener('resize',()=>{ clearTimeout(resizeT); resizeT=setTimeout(render,200); });
+syncUI();
+function boot(){
+  try{
+    tk=new verovio.toolkit(); tkAudio=new verovio.toolkit();
+    document.getElementById('status')?.remove();
+    render();
+  }catch(e){
+    document.getElementById('score').innerHTML='<div class="status err">Le moteur de partition n\'a pas pu démarrer dans ce navigateur.</div>';
+  }
+}
+if(window.verovio && verovio.module){
+  if(verovio.module.calledRun) boot(); else verovio.module.onRuntimeInitialized=boot;
+}else{
+  document.getElementById('status').textContent='Le moteur de partition (Verovio) n\'a pas pu être chargé.';
+  document.getElementById('status').className='status err';
+}
+</script>
