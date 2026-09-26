@@ -3,13 +3,16 @@
 Retranscrire une partition PDF en quelque chose de lisible sur ordinateur ou tablette,
 avec des versions pour le chœur (soprano, alto, ténor, basse), le piano et la guitare.
 
-**État : prototype.** Deux modes de lecture, choisis automatiquement :
+**État : prototype.** Trois modes de lecture, choisis automatiquement d'après les polices du PDF :
 
 - **PDF LilyPond** (testé sur un cantique à 4 voix, voir [`exemples/a-toi-la-gloire`](exemples/a-toi-la-gloire)) :
-  lecture fine, avec paroles et accords tirés du texte du PDF, et versions chœur, voix, piano et guitare.
-- **Autres PDF** (testé sur un piano solo Noviscore) : la lecture d'Audiveris telle quelle, et des
-  versions piano, mélodie (note la plus aiguë de la main droite) et guitare (mélodie + accords
-  reconnus par Audiveris). Pas de paroles, et les mesures au rythme douteux sont signalées dans la page.
+  paroles et accords tirés du texte du PDF, versions chœur, voix, piano et guitare.
+- **PDF Sibelius** (polices « Opus », comme les partitions Noviscore ; testé sur un piano solo de 3 pages) :
+  paroles et accords tirés du texte du PDF, versions piano, mélodie (note la plus aiguë de la main
+  droite, avec les paroles) et guitare (mélodie, paroles et accords).
+- **Autres PDF** : la lecture d'Audiveris telle quelle, versions piano, mélodie et guitare, sans paroles.
+
+Dans tous les cas, les mesures au rythme douteux sont signalées dans la page.
 
 ## Ce que ça produit
 
@@ -39,9 +42,13 @@ PDF ──► Audiveris ──► MusicXML brut ──► extraire.py ──► 
    mais lit mal les paroles et ne reconnaît pas les accords écrits en Do Ré Mi.
 2. **`partoches/extraire.py`** tire parti du PDF vectoriel : paroles, accords et têtes de notes y sont
    du texte avec une position exacte. On cale les positions d'Audiveris sur celles du PDF, puis on
-   rattache chaque syllabe et chaque accord à sa note. Les traits d'union dessinés donnent le
-   découpage des syllabes. Quelques erreurs de rythme courantes sont corrigées automatiquement.
-   Les voix sont ensuite séparées avec [music21](https://music21.org).
+   rattache chaque syllabe et chaque accord à sa note. Les traits d'union donnent le
+   découpage des syllabes. Les lignes de portées (systèmes) sont repérées par la ligne d'accords
+   (LilyPond) ou par les clés en début de ligne (Sibelius, sur plusieurs pages). Quelques erreurs de
+   rythme courantes sont corrigées automatiquement. Les voix sont ensuite séparées avec
+   [music21](https://music21.org).
+   Codage des accords Sibelius : `¨` = bémol, `('9)` = add9, `M7` = maj7, `/G` seul = même accord
+   avec sol à la basse.
 3. **`partoches/page.py`** assemble une page HTML unique qui affiche la partition avec
    [Verovio](https://www.verovio.org) (chargé depuis jsDelivr).
 
@@ -74,12 +81,14 @@ Un fichier `a-verifier.txt` placé dans le dossier de sortie s'affiche dans la p
 
 ## Limites connues
 
-- **Lecture fine réservée à LilyPond** : elle s'appuie sur les polices de LilyPond (Emmentaler,
-  DejaVuSans, Century Schoolbook), sur une seule page, deux portées et deux voix par portée (le
-  format cantique SATB). Les accords servent à repérer les systèmes. Les autres PDF passent en mode
-  générique, sans paroles.
+- **Lecture du texte réservée à LilyPond et Sibelius** : elle s'appuie sur leurs polices. En
+  LilyPond : une seule page, deux portées et deux voix par portée (le format cantique SATB), avec
+  des accords (ils servent à repérer les systèmes). En Sibelius : les systèmes doivent commencer
+  par une clé, et le nombre de systèmes doit être le même que chez Audiveris ; sinon le texte est
+  ignoré (c'est indiqué dans la page).
 - **Triolets** : Audiveris se trompe souvent sur les mesures qui en contiennent ; elles sont listées
-  dans la page (« Encore à corriger à la main »).
+  dans la page (« Encore à corriger à la main »). Dans ces mesures, une syllabe peut se retrouver
+  décalée d'une note, ou manquer.
 - **Pas d'harmonisation** : une mélodie seule ne devient pas un chœur à 4 voix.
 - Pas de tablature de guitare (grilles d'accords simplifiées : les accords enrichis comme `add9` ou
   `13` sont ramenés à leur forme de base). L'écoute joue les barres de reprise, mais pas les D.C.
