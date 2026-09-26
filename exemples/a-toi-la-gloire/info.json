@@ -1,10 +1,21 @@
 {
+ "mode_lecture": "lilypond",
  "titre": "À TOI, LA GLOIRE, Ô RESSUSCITÉ",
  "compositeur": "Musique : G. F. Haendel (1745)",
  "en_tete": [
   "E. Budry (1885)",
   "Musique : G. F. Haendel (1745)",
   "baissé d'un ton"
+ ],
+ "detail": "4 voix · 3 couplets",
+ "versions": [
+  "satb",
+  "soprano",
+  "alto",
+  "tenor",
+  "basse",
+  "piano",
+  "guitare"
  ],
  "tonique": 2,
  "mode": "major",
@@ -54,5 +65,14 @@
   "Mesure 8, voix 2 : silence ajouté (1.0 temps manquants)",
   "Mesure 12, voix 2 : silence ajouté (2.0 temps manquants)",
   "Mesure 16, voix 1 : silence ajouté (1.0 temps manquants)"
- ]
+ ],
+ "a_verifier": [],
+ "etapes": [
+  "PDF LilyPond",
+  "Audiveris (notes, rythmes)",
+  "texte du PDF (paroles, accords)",
+  "music21 (voix, piano, guitare)",
+  "Verovio (affichage, transposition, écoute)"
+ ],
+ "resume": "16 mesures reconnues à 4 voix, 129 syllabes réparties sur 3 couplets, 26 accords relevés dans le PDF."
 }

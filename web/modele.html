@@ -125,10 +125,10 @@ input[type=range]{accent-color:var(--accent);width:110px}
 
     <section class="notes">
       <h2>Comment cette page a été produite</h2>
-      <div class="pipeline"><span>PDF LilyPond</span><em>→</em><span>Audiveris (notes, rythmes)</span><em>→</em><span>texte du PDF (paroles, accords)</span><em>→</em><span>music21 (voix, piano, guitare)</span><em>→</em><span>Verovio (affichage, transposition, écoute)</span></div>
+      <div class="pipeline" id="etapes"></div>
       <p id="stats"></p>
       <div class="warnbox" id="residuel"></div>
-      <details><summary>Corrections automatiques appliquées</summary><ul id="corr"></ul></details>
+      <details id="corrWrap"><summary>Corrections automatiques appliquées</summary><ul id="corr"></ul></details>
     </section>
   </div>
 </div>
@@ -137,10 +137,10 @@ input[type=range]{accent-color:var(--accent);width:110px}
 <script id="data" type="application/json">__DATA__</script>
 <script>
 const DATA = JSON.parse(document.getElementById('data').textContent);
-const VERSIONS = [
-  ['satb','Chœur SATB'],['soprano','Soprano'],['alto','Alto'],['tenor','Ténor'],['basse','Basse'],['piano','Piano'],['guitare','Guitare']
-];
-const VOICES = [['soprano','Soprano','--s'],['alto','Alto','--a'],['tenor','Ténor','--t'],['basse','Basse','--b']];
+const LABELS = {satb:'Chœur SATB', soprano:'Soprano', alto:'Alto', tenor:'Ténor', basse:'Basse', melodie:'Mélodie', piano:'Piano', guitare:'Guitare'};
+const VERSIONS = DATA.info.versions.map(k=>[k, LABELS[k]||k]);
+// voix de chœur séparées (mode LilyPond) : écoute voix par voix ; sinon on écoute la version affichée
+const VOICES = [['soprano','Soprano','--s'],['alto','Alto','--a'],['tenor','Ténor','--t'],['basse','Basse','--b']].filter(v=>DATA.xml[v[0]]);
 // tessitures usuelles (MIDI) pour signaler une voix trop aiguë ou trop grave
 const RANGES = {soprano:[60,79], alto:[55,74], tenor:[48,67], basse:[40,62]};
 const FR = {C:'Do',D:'Ré',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
@@ -153,16 +153,16 @@ const store = {
   set(k,v){ try{ localStorage.setItem('partoches.'+k, JSON.stringify(v)); }catch(e){} }
 };
 const state = {
-  version: store.get('version','satb'), semis: store.get('semis',0), nota: store.get('nota','fr'),
+  version: DATA.info.versions.includes(store.get('version','')) ? store.get('version','') : DATA.info.versions[0], semis: store.get('semis',0), nota: store.get('nota','fr'),
   zoom: store.get('zoom',42), tempo: store.get('tempo',96),
-  mix: {soprano:'normal',alto:'normal',tenor:'normal',basse:'normal'}
+  mix: Object.fromEntries(VOICES.map(v=>[v[0],'normal']))
 };
 let tk, tkAudio, displayMap = [];
 
 // ---------- en-tête
 document.getElementById('titre').textContent = DATA.titre;
 document.getElementById('meta').innerHTML = DATA.info.en_tete.map(t=>t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))).join('<br>')
-  + `<br>4 voix · ${DATA.info.nb_couplets} couplet${DATA.info.nb_couplets>1?'s':''}`;
+  + (DATA.info.detail ? '<br>'+DATA.info.detail : '');
 
 // ---------- contrôles
 const vWrap = document.getElementById('versions');
@@ -187,6 +187,7 @@ VOICES.forEach(([k,l,c])=>{
   b.onclick=()=>{ const order=['normal','fort','muet']; state.mix[k]=order[(order.indexOf(state.mix[k])+1)%3]; applyMix(); syncUI(); };
   mix.appendChild(b);
 });
+mix.hidden = !VOICES.length;
 function setMyVoice(k){ for(const v in state.mix) state.mix[v] = v===k?'fort':'normal'; applyMix(); }
 function resetMix(){ for(const v in state.mix) state.mix[v]='normal'; applyMix(); }
 
@@ -253,8 +254,8 @@ const OPEN = { // cordes Mi grave → Mi aigu ; -1 = non jouée
   'A7':[-1,0,2,0,2,0],'D7':[-1,-1,0,2,1,2],'E7':[0,2,0,1,0,0],'G7':[3,2,0,0,0,1],'C7':[-1,3,2,3,1,0],'B7':[-1,2,1,2,0,2],
   'Em6':[0,2,2,0,2,0]
 };
-const SHAPE_E = {'':[0,2,2,1,0,0],'m':[0,2,2,0,0,0],'7':[0,2,0,1,0,0],'m7':[0,2,0,0,0,0],'m6':[0,2,2,0,2,0]};
-const SHAPE_A = {'':[-1,0,2,2,2,0],'m':[-1,0,2,2,1,0],'7':[-1,0,2,0,2,0],'m7':[-1,0,2,0,1,0],'m6':[-1,0,2,2,1,2]};
+const SHAPE_E = {'':[0,2,2,1,0,0],'m':[0,2,2,0,0,0],'7':[0,2,0,1,0,0],'m7':[0,2,0,0,0,0],'m6':[0,2,2,0,2,0],'maj7':[0,-1,1,1,0,-1],'6':[0,-1,1,1,2,-1]};
+const SHAPE_A = {'':[-1,0,2,2,2,0],'m':[-1,0,2,2,1,0],'7':[-1,0,2,0,2,0],'m7':[-1,0,2,0,1,0],'m6':[-1,0,2,2,1,2],'maj7':[-1,0,2,1,2,0],'6':[-1,0,2,2,2,2]};
 function chordShape(root, q){
   const key=PC_EN[root].replace('♯','#').replace('♭','b')+q;
   if(OPEN[key]) return OPEN[key];
@@ -263,13 +264,23 @@ function chordShape(root, q){
   return shape.map(x=>x<0?-1:x+f);
 }
 function parseChord(fig){ const m=fig.match(/^([A-G])([#-]?)(.*)$/); let pc={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2]==='#'?1:m[2]==='-'?-1:0); return [((pc%12)+12)%12, m[3]]; }
+// ramène une qualité d'accord (maj7, add b9, /B…) à une forme de grille connue
+function shapeQuality(q){
+  q=q.split('/')[0].replace(/\s+/g,'');
+  if(SHAPE_E[q]) return q;
+  if(/^maj/.test(q)) return 'maj7';
+  if(/^m(?!aj)/.test(q)) return /7/.test(q)?'m7':/6/.test(q)?'m6':'m';
+  if(/^(7|9|11|13)/.test(q)) return '7';
+  if(/^6/.test(q)) return '6';
+  return '';
+}
 function drawGrids(){
   if(state.version!=='guitare') return;
   const g=document.getElementById('grids'); g.innerHTML='';
   DATA.info.accords.forEach(fig=>{
     let [pc,q]=parseChord(fig); pc=((pc+state.semis)%12+12)%12;
-    const frets=chordShape(pc,q); const played=frets.filter(f=>f>0);
-    const base = Math.max(...played)>4 ? Math.min(...played) : 1;
+    const frets=chordShape(pc,shapeQuality(q)); const played=frets.filter(f=>f>0);
+    const base = played.length && Math.max(...played)>4 ? Math.min(...played) : 1;
     const X=i=>10+i*10, Y=r=>18+r*14;
     let s=`<svg viewBox="0 0 70 92" role="img" aria-label="grille ${fig}">`;
     for(let i=0;i<6;i++) s+=`<line x1="${X(i)}" y1="${Y(0)}" x2="${X(i)}" y2="${Y(5)}" stroke="currentColor" stroke-width="1"/>`;
@@ -281,7 +292,8 @@ function drawGrids(){
     });
     if(base>1) s+=`<text x="64" y="${Y(0)+11}" font-size="9" fill="currentColor">${base}</text>`;
     s+='</svg>';
-    const name=(state.nota==='fr'?PC_FR:PC_EN)[pc]+(q?(state.nota==='fr'&&q.startsWith('m')?' ':'')+q:'');
+    q=q.replace(/-/g,'♭').replace(/#/g,'♯');
+    const name=(state.nota==='fr'?PC_FR:PC_EN)[pc]+(q?(state.nota==='fr'&&/^m(?!aj)/.test(q)?' ':'')+q:'');
     g.insertAdjacentHTML('beforeend',`<div class="grid">${s}<span>${name}</span></div>`);
   });
 }
@@ -300,9 +312,10 @@ function applyMix(){
 }
 function voiceEvents(){
   const ev=[];
-  VOICES.forEach(([k])=>{
+  const pistes = VOICES.length ? VOICES.map(v=>[v[0], DATA.xml[v[0]]]) : [['tout', DATA.xml[state.version]]];
+  pistes.forEach(([k, xml])=>{
     tkAudio.setOptions({transpose: state.semis ? (state.semis>0?'+':'')+state.semis : ''});
-    tkAudio.loadData(DATA.xml[k]);
+    tkAudio.loadData(xml);
     const seen=new Set();
     tkAudio.renderToTimemap().forEach(e=>(e.on||[]).forEach(id=>{
       if(seen.has(id)) return; seen.add(id);
@@ -316,7 +329,7 @@ function play(){
   ctx = ctx || new (window.AudioContext||window.webkitAudioContext)();
   ctx.resume();
   master=ctx.createGain(); master.gain.value=.22; master.connect(ctx.destination);
-  VOICES.forEach(([k])=>{ voiceGains[k]=ctx.createGain(); voiceGains[k].connect(master); });
+  [...VOICES.map(v=>v[0]), 'tout'].forEach(k=>{ voiceGains[k]=ctx.createGain(); voiceGains[k].connect(master); });
   applyMix();
   const f=120/state.tempo/1000; // Verovio minute à 120 à la noire
   const t0=ctx.currentTime+.15;
@@ -356,8 +369,9 @@ document.getElementById('play').onclick=()=> player.on?stop():play();
 
 // ---------- notes de production
 const I=DATA.info;
-document.getElementById('stats').textContent =
-  `${I.nb_mesures} mesures reconnues à 4 voix, ${I.nb_syllabes} syllabes réparties sur ${I.nb_couplets} couplets, ${I.nb_accords} accords relevés dans le PDF.`;
+document.getElementById('stats').textContent = I.resume;
+document.getElementById('etapes').innerHTML = I.etapes.map(e=>`<span>${e}</span>`).join('<em>→</em>');
+document.getElementById('corrWrap').hidden = !I.corrections.length;
 const resid=document.getElementById('residuel');
 if(DATA.a_verifier) resid.innerHTML = '<b>Encore à corriger à la main :</b> ' + DATA.a_verifier; else resid.hidden = true;
 I.corrections.forEach(c=>document.getElementById('corr').insertAdjacentHTML('beforeend',`<li>${c}</li>`));

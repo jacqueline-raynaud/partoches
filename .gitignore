@@ -9,3 +9,6 @@ venv/
 
 # les PDF sources restent en local (droits de la gravure)
 *.pdf
+
+# fichiers de langue Tesseract (téléchargés, voir README)
+tessdata/

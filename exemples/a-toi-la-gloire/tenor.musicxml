@@ -22,21 +22,21 @@
     </scaling>
   </defaults>
   <part-list>
-    <score-part id="P39868409aac68d5ed629ea949191bcf3">
+    <score-part id="P44c25dbbac3f8f720a2b8e0b890d7663">
       <part-name>Ténor</part-name>
       <part-abbreviation>V</part-abbreviation>
-      <score-instrument id="I3dda4e6f814a944c96fb3525ac1efead">
+      <score-instrument id="I184fa626946ee20d04e6cbf307045cbd">
         <instrument-name>Voice</instrument-name>
         <instrument-abbreviation>V</instrument-abbreviation>
       </score-instrument>
-      <midi-instrument id="I3dda4e6f814a944c96fb3525ac1efead">
+      <midi-instrument id="I184fa626946ee20d04e6cbf307045cbd">
         <midi-channel>1</midi-channel>
         <midi-program>54</midi-program>
       </midi-instrument>
     </score-part>
   </part-list>
   <!--=========================== Part 1 ===========================-->
-  <part id="P39868409aac68d5ed629ea949191bcf3">
+  <part id="P44c25dbbac3f8f720a2b8e0b890d7663">
     <!--========================= Measure 1 ==========================-->
     <measure implicit="no" number="1">
       <attributes>
@@ -533,6 +533,9 @@
         <duration>10080</duration>
         <type>quarter</type>
       </note>
+      <barline location="right">
+        <bar-style>light-light</bar-style>
+      </barline>
     </measure>
     <!--========================= Measure 9 ==========================-->
     <measure implicit="no" number="9">

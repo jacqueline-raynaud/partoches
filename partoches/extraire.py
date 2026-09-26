@@ -123,12 +123,30 @@ def trait_entre(traits, a, b):
     return any(a['x1'] - 1 < h.x0 < b['x0'] + 1 and a['y0'] < h.y0 < a['y1'] + 2 for h in traits)
 
 
+def copier_barres(src, dst):
+    """Garde les barres de reprise : sans elles, l'écoute saute les passages répétés."""
+    if src.leftBarline is not None:
+        dst.leftBarline = copy.deepcopy(src.leftBarline)
+    if src.rightBarline is not None:
+        dst.rightBarline = copy.deepcopy(src.rightBarline)
+
+
 # ------------------------------------------------------------------ programme principal
 def extraire(pdf_path, mxl_path, dossier):
+    """Choisit le mode : lecture fine du texte pour LilyPond, sinon résultat d'Audiveris seul."""
     dossier = Path(dossier)
     dossier.mkdir(parents=True, exist_ok=True)
-    corrections = []
     spans, traits = lire_pdf(pdf_path)
+    if any(s['font'].startswith('Emmentaler') for s in spans):
+        info = extraire_lilypond(pdf_path, mxl_path, dossier, spans, traits)
+    else:
+        info = extraire_generique(pdf_path, mxl_path, dossier, spans)
+    (dossier / 'info.json').write_text(json.dumps(info, ensure_ascii=False, indent=1), encoding='utf-8')
+    return info
+
+
+def extraire_lilypond(pdf_path, mxl_path, dossier, spans, traits):
+    corrections = []
     accords_pdf = noms_accords(spans)
     systemes = systemes_pdf(spans, accords_pdf)
 
@@ -234,6 +252,7 @@ def extraire(pdf_path, mxl_path, dossier):
                 nm.timeSignature = copy.deepcopy(m.timeSignature)
             if m.keySignature:
                 nm.keySignature = copy.deepcopy(m.keySignature)
+            copier_barres(m, nm)
             for v in m.voices:
                 if v.id == vid:
                     for e in v.notesAndRests:
@@ -269,13 +288,119 @@ def extraire(pdf_path, mxl_path, dossier):
     for k, sc in versions.items():
         sc.write('musicxml', fp=dossier / f'{k}.musicxml')
 
-    info = dict(titre=titre, compositeur=compositeur, en_tete=haut_de_page,
+    nb_couplets = max(len(sy['paroles']) for sy in systemes)
+    nb_syllabes = sum(len(v) for v in syllabes.values())
+    return dict(mode_lecture='lilypond', titre=titre, compositeur=compositeur, en_tete=haut_de_page,
+                detail=f"4 voix · {nb_couplets} couplet{'s' if nb_couplets > 1 else ''}",
+                versions=['satb', 'soprano', 'alto', 'tenor', 'basse', 'piano', 'guitare'],
                 tonique=tonalite.tonic.pitchClass, mode=tonalite.mode,
-                nb_mesures=len(mesures_haut), nb_couplets=max(len(sy['paroles']) for sy in systemes),
+                nb_mesures=len(mesures_haut), nb_couplets=nb_couplets,
                 tessitures=tessitures, accords=sorted({a['figure'] for a in accords}), nb_accords=len(accords),
-                nb_syllabes=sum(len(v) for v in syllabes.values()), corrections=corrections)
-    (dossier / 'info.json').write_text(json.dumps(info, ensure_ascii=False, indent=1), encoding='utf-8')
-    return info
+                nb_syllabes=nb_syllabes, corrections=corrections, a_verifier=[],
+                etapes=['PDF LilyPond', 'Audiveris (notes, rythmes)', 'texte du PDF (paroles, accords)',
+                        'music21 (voix, piano, guitare)', 'Verovio (affichage, transposition, écoute)'],
+                resume=f"{len(mesures_haut)} mesures reconnues à 4 voix, {nb_syllabes} syllabes réparties sur "
+                       f"{nb_couplets} couplets, {len(accords)} accords relevés dans le PDF.")
+
+
+# ------------------------------------------------------------------ mode générique
+EN_TETE = re.compile(r'^(Auteur|Compositeur|Paroles|Musique|Interprète|Arrangement)\s*:', re.I)
+
+
+def melodie_de(part, avec_accords):
+    """Ligne mélodique = note la plus aiguë à chaque instant de la portée (toutes voix confondues)."""
+    mel = stream.Part(id='Mélodie')
+    mel.partName = 'Mélodie'
+    for m in part.getElementsByClass(stream.Measure):
+        nm = stream.Measure(number=m.number)
+        if m.timeSignature:
+            nm.timeSignature = copy.deepcopy(m.timeSignature)
+        if m.keySignature:
+            nm.keySignature = copy.deepcopy(m.keySignature)
+        copier_barres(m, nm)
+        travail = copy.deepcopy(m)
+        for cs in list(travail.recurse().getElementsByClass(harmony.ChordSymbol)):
+            cs.activeSite.remove(cs)  # un symbole d'accord compte comme un accord pour chordify
+        for e in travail.chordify().notesAndRests:
+            if e.isRest:
+                nm.insert(e.offset, note.Rest(quarterLength=e.quarterLength))
+            else:
+                n = note.Note(max(e.pitches), quarterLength=e.quarterLength)
+                n.tie = e.tie
+                nm.insert(e.offset, n)
+        if avec_accords:
+            for cs in m.recurse().getElementsByClass(harmony.ChordSymbol):
+                nm.insert(cs.getOffsetInHierarchy(m), copy.deepcopy(cs))
+        mel.append(nm)
+    mel.getElementsByClass(stream.Measure)[0].insert(0, clef.TrebleClef())
+    mel.insert(0, instrument.Vocalist())
+    mel.getElementsByClass(stream.Measure)[-1].rightBarline = 'final'
+    return mel
+
+
+def extraire_generique(pdf_path, mxl_path, dossier, spans):
+    """PDF d'une autre origine : on garde la lecture d'Audiveris et on signale les mesures douteuses."""
+    partition = converter.parse(mxl_path)
+    parts = list(partition.parts)
+    haut = parts[0]
+    mesures = list(haut.getElementsByClass(stream.Measure))
+
+    a_verifier = []
+    for num_portee, part in enumerate(parts, start=1):
+        ms = list(part.getElementsByClass(stream.Measure))
+        for i, m in enumerate(ms):
+            attendu = m.barDuration.quarterLength
+            duree = max((v.highestTime for v in m.voices), default=m.highestTime)
+            if abs(duree - attendu) > 0.01 and not (i == 0 and duree < attendu):  # anacrouse tolérée
+                a_verifier.append(f"Mesure {m.number}, portée {num_portee} : {float(duree):g} temps au lieu de {float(attendu):g}")
+
+    doc = pymupdf.open(pdf_path)
+    titre = (doc.metadata.get('title') or '').split(' - ')[0].strip() or \
+        max(spans, key=lambda s: s['size'])['t'] if spans else Path(pdf_path).stem
+    en_tete = list(dict.fromkeys(s['t'].strip() for s in spans if EN_TETE.match(s['t'].strip())))
+    compositeur = next((t.split(':', 1)[1].strip() for t in en_tete if t.lower().startswith(('compositeur', 'musique'))), '')
+    # tonalité de départ : armure de la 1re mesure (absente = aucune altération)
+    armure = mesures[0].keySignature if mesures else None
+    tonalite = armure.asKey('major') if armure else None
+
+    def nouvelle(parts_, sous_titre):
+        s = stream.Score()
+        s.metadata = metadata.Metadata(title=titre, composer=compositeur)
+        s.metadata.movementName = sous_titre
+        for p in parts_:
+            s.insert(0, p)
+        return s
+
+    piano = []
+    for part in parts:
+        p = copy.deepcopy(part)
+        for mm in list(p.recurse().getElementsByClass('MetronomeMark')):
+            mm.activeSite.remove(mm)  # le tempo se règle dans la page ; Verovio part alors de ♩ = 120
+        p.insert(0, instrument.Piano())
+        piano.append(p)
+    melodie = melodie_de(haut, avec_accords=False)
+    versions = {'piano': nouvelle(piano, 'Piano'),
+                'melodie': nouvelle([melodie], 'Mélodie'),
+                'guitare': nouvelle([melodie_de(haut, avec_accords=True)], 'Guitare (mélodie + accords)')}
+    for k, sc in versions.items():
+        sc.write('musicxml', fp=dossier / f'{k}.musicxml')
+
+    hauteurs = [n.pitch for n in melodie.recurse().getElementsByClass(note.Note)]
+    accords = [cs.figure for cs in haut.recurse().getElementsByClass(harmony.ChordSymbol)]
+    nb_syllabes = sum(len(n.lyrics) for n in haut.recurse().notes)
+    return dict(mode_lecture='generique', titre=titre, compositeur=compositeur, en_tete=en_tete,
+                detail=f"{len(parts)} portées · {len(mesures)} mesures",
+                versions=['piano', 'melodie', 'guitare'],
+                tonique=tonalite.tonic.pitchClass if tonalite else 0, mode=tonalite.mode if tonalite else 'major',
+                nb_mesures=len(mesures), nb_couplets=0,
+                tessitures={'melodie': (min(hauteurs).nameWithOctave, max(hauteurs).nameWithOctave)} if hauteurs else {},
+                accords=sorted(set(accords)), nb_accords=len(accords), nb_syllabes=nb_syllabes,
+                corrections=[], a_verifier=a_verifier,
+                etapes=['PDF', 'Audiveris (notes, rythmes, accords)', 'music21 (mélodie, guitare)',
+                        'Verovio (affichage, transposition, écoute)'],
+                resume=f"{len(mesures)} mesures reconnues sur {len(parts)} portées, {len(accords)} accords lus par "
+                       f"Audiveris, {len(a_verifier)} mesures au rythme incohérent à vérifier. Paroles non reprises : "
+                       f"la lecture fine du texte n'existe pour l'instant que pour les PDF LilyPond.")
 
 
 if __name__ == '__main__':
